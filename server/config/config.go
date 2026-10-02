@@ -264,13 +264,34 @@ func ReadConfig() (*Config, error) {
 }
 
 func (c *Config) fixPath() {
-	if c.DbType == DBTypeSQLite && !strings.HasPrefix(c.DbDSN, "/") {
-		c.DbDSN = ROOT_PATH + c.DbDSN
+	if c.DbType == DBTypeSQLite {
+		c.DbDSN = fixSQLiteDSN(ROOT_PATH, c.DbDSN)
 	}
-	if !strings.HasPrefix(c.SSLPublicKeyPath, "/") {
-		c.SSLPublicKeyPath = ROOT_PATH + c.SSLPublicKeyPath
+
+	for _, p := range []*string{
+		&c.DkimPrivateKeyPath,
+		&c.SSLPublicKeyPath,
+		&c.SSLPrivateKeyPath,
+	} {
+		if *p != "" && !filepath.IsAbs(*p) {
+			*p = filepath.Join(ROOT_PATH, *p)
+		}
 	}
-	if !strings.HasPrefix(c.SSLPrivateKeyPath, "/") {
-		c.SSLPrivateKeyPath = ROOT_PATH + c.SSLPrivateKeyPath
+}
+
+func fixSQLiteDSN(root, dsn string) string {
+	if dsn == "" || dsn == ":memory:" || strings.HasPrefix(dsn, "file:") {
+		return dsn
 	}
+
+	path, query, _ := strings.Cut(dsn, "?")
+	if filepath.IsAbs(path) {
+		return dsn
+	}
+
+	path = filepath.Join(root, path)
+	if query != "" {
+		return path + "?" + query
+	}
+	return path
 }
