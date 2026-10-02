@@ -267,6 +267,9 @@ func (c *Config) fixPath() {
 	if c.DbType == DBTypeSQLite && !strings.HasPrefix(c.DbDSN, "/") {
 		c.DbDSN = ROOT_PATH + c.DbDSN
 	}
+	if !strings.HasPrefix(c.DkimPrivateKeyPath, "/") {
+		c.DkimPrivateKeyPath = ROOT_PATH + c.DkimPrivateKeyPath
+	}
 	if !strings.HasPrefix(c.SSLPublicKeyPath, "/") {
 		c.SSLPublicKeyPath = ROOT_PATH + c.SSLPublicKeyPath
 	}
