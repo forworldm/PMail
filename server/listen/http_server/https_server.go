@@ -53,7 +53,7 @@ func HttpsStart() {
 	if config.Instance.HttpsEnabled != 2 {
 		log.Infof("Https Server Start On Port :%d", HttpsPort)
 		httpsServer = &http.Server{
-			Addr:         fmt.Sprintf(":%d", HttpsPort),
+			Addr:         fmt.Sprintf("%s:%d", config.Instance.HttpsAddr, HttpsPort),
 			Handler:      session.Instance.LoadAndSave(mux),
 			ReadTimeout:  time.Second * 90,
 			WriteTimeout: time.Second * 90,

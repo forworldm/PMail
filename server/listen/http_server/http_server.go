@@ -83,7 +83,7 @@ func HttpStart() {
 
 		log.Infof("HttpServer Start On Port :%d", HttpPort)
 		httpServer = &http.Server{
-			Addr:         fmt.Sprintf(":%d", HttpPort),
+			Addr:         fmt.Sprintf("%s:%d", config.Instance.HttpAddr, HttpPort),
 			Handler:      session.Instance.LoadAndSave(mux),
 			ReadTimeout:  time.Second * 90,
 			WriteTimeout: time.Second * 90,
