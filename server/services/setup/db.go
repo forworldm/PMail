@@ -25,14 +25,14 @@ func GetDatabaseSettings(ctx *context.Context) (string, string, error) {
 
 func GetAdminPassword(ctx *context.Context) (string, error) {
 
-	users := []*models.User{}
-	err := db.Instance.Find(&users)
+	user := &models.User{}
+	has, err := db.Instance.Where("is_admin = ?", 1).Asc("id").Limit(1).Get(user)
 	if err != nil {
 		return "", errors.Wrap(err)
 	}
 
-	if len(users) > 0 {
-		return users[0].Account, nil
+	if has {
+		return user.Account, nil
 	}
 
 	return "", nil
@@ -52,6 +52,17 @@ func SetAdminPassword(ctx *context.Context, account, pwd string) error {
 		return errors.Wrap(err)
 	}
 
+	return nil
+}
+
+func TrySetAdminPassword(ctx *context.Context, account, pwd string) error {
+	existing, err := GetAdminPassword(ctx)
+	if err != nil {
+		return nil
+	}
+	if existing == "" {
+		return SetAdminPassword(ctx, account, pwd)
+	}
 	return nil
 }
 

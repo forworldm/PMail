@@ -15,11 +15,13 @@ import (
 	"github.com/Jinnrry/pmail/listen/imap_server"
 	"github.com/Jinnrry/pmail/listen/pop3_server"
 	"github.com/Jinnrry/pmail/listen/smtp_server"
+	"github.com/Jinnrry/pmail/services/setup"
 	"github.com/Jinnrry/pmail/services/setup/ssl"
 	"github.com/Jinnrry/pmail/session"
 	"github.com/Jinnrry/pmail/signal"
 	"github.com/Jinnrry/pmail/utils/file"
 	log "github.com/sirupsen/logrus"
+
 	// 新增：HTTP 就绪探测
 	"net/http"
 )
@@ -41,6 +43,10 @@ func Init(serverVersion string) {
 
 		parsemail.Init()
 		err := db.Init(serverVersion)
+		if err != nil {
+			panic(err)
+		}
+		err = setup.TrySetAdminPassword(nil, "admin", "admin")
 		if err != nil {
 			panic(err)
 		}
