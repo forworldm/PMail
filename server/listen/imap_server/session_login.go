@@ -32,6 +32,8 @@ func (s *serverSession) Login(username, pwd string) error {
 		s.ctx.UserID = user.ID
 		s.ctx.UserName = user.Name
 		s.ctx.UserAccount = user.Account
+		s.ctx.RealUserID = user.ID
+		s.ctx.RealUserAccount = user.Account
 		log.WithContext(s.ctx).Debug("Login successful")
 
 		return nil

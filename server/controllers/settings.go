@@ -30,7 +30,8 @@ func ModifyPassword(ctx *context.Context, w http.ResponseWriter, req *http.Reque
 	if retData.Password != "" {
 		encodePwd := password.Encode(retData.Password)
 
-		_, err := db.Instance.Table("user").Where("id=?", ctx.UserID).Update(map[string]interface{}{"password": encodePwd})
+		// 必须作用于真正登录的账户：切换到关联账户身份时也不能修改关联账户的密码
+		_, err := db.Instance.Table("user").Where("id=?", ctx.RealUserID).Update(map[string]interface{}{"password": encodePwd})
 		if err != nil {
 			response.NewErrorResponse(response.ServerError, i18n.GetText(ctx.Lang, "unknowError"), "").FPrint(w)
 			return

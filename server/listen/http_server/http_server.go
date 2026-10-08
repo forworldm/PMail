@@ -54,6 +54,10 @@ func router(mux *http.ServeMux) {
 	mux.HandleFunc("/api/user/edit", contextIterceptor(controllers.EditUser))
 	mux.HandleFunc("/api/user/info", contextIterceptor(controllers.Info))
 	mux.HandleFunc("/api/user/list", contextIterceptor(controllers.UserList))
+	mux.HandleFunc("/api/link/list", contextIterceptor(controllers.LinkList))
+	mux.HandleFunc("/api/link/add", contextIterceptor(controllers.LinkAdd))
+	mux.HandleFunc("/api/link/del", contextIterceptor(controllers.LinkDel))
+	mux.HandleFunc("/api/link/admin_list", contextIterceptor(controllers.LinkAdminList))
 	mux.HandleFunc("/api/plugin/settings/", contextIterceptor(controllers.SettingsHtml))
 	mux.HandleFunc("/api/plugin/list", contextIterceptor(controllers.GetPluginList))
 }

@@ -118,6 +118,29 @@ func TestMaster(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	t.Run("testTokenLogin", testTokenLogin)
+
+	// ---- 主账户 / 关联账户 功能 ----
+	// 当前会话为 user2，先验证普通用户无权建立授权关系
+	t.Run("testLinkAddByNonAdmin", testLinkAddByNonAdmin)
+	// 管理员建立 user1 -> user2 的授权关系
+	t.Run("testLinkAddByAdmin", testLinkAddByAdmin)
+	// user1 能看到自己的关联账户
+	t.Run("testLinkListAsPrimary", testLinkListAsPrimary)
+	// 切换到 user2 身份后，用户信息反映新身份并保留真实登录者
+	t.Run("testUserInfoAsLinked", testUserInfoAsLinked)
+	// user1 以 user2 身份只能看到 user2 的邮件
+	t.Run("testEmailListAsLinked", testEmailListAsLinked)
+	// 切换到未授权账户必须被拒绝，且不影响后续请求
+	t.Run("testActAsHeaderAcceptsAccountOnly", testActAsHeaderAcceptsAccountOnly)
+
+	t.Run("testActingAsUnrelatedAccountRejected", testActingAsUnrelatedAccountRejected)
+	// 以关联账户身份发信，From 必须是该身份
+	t.Run("testSendAsLinked", testSendAsLinked)
+	time.Sleep(3 * time.Second)
+	// 以关联账户身份修改密码，只能改自己的
+	t.Run("testModifyPasswordKeepsRealAccount", testModifyPasswordKeepsRealAccount)
+	// 管理员解除授权关系后，切换身份必须失效
+	t.Run("testLinkDelByAdmin", testLinkDelByAdmin)
 }
 
 func md5Encode(str string) string {

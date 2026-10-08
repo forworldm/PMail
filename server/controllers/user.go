@@ -6,6 +6,7 @@ import (
 	"github.com/Jinnrry/pmail/db"
 	"github.com/Jinnrry/pmail/dto/response"
 	"github.com/Jinnrry/pmail/models"
+	"github.com/Jinnrry/pmail/services/link"
 	"github.com/Jinnrry/pmail/utils/array"
 	"github.com/Jinnrry/pmail/utils/context"
 	"github.com/Jinnrry/pmail/utils/password"
@@ -111,11 +112,40 @@ func Info(ctx *context.Context, w http.ResponseWriter, req *http.Request) {
 	domains = array.Difference(domains, []string{config.Instance.Domain})
 	domains = append([]string{config.Instance.Domain}, domains...)
 
+	// 当前登录账户可以切换到的关联账户
+	linked, err := link.LinkedAccountsOf(ctx, ctx.RealUserID)
+	if err != nil {
+		log.WithContext(ctx).Errorf("sql error:%+v", err)
+	}
+
+	// 关联账户只暴露账号名，不暴露用户ID
+	type linkedItem struct {
+		Account  string `json:"account"`
+		Name     string `json:"name"`
+		Disabled int    `json:"disabled"`
+	}
+	linkedItems := make([]linkedItem, 0, len(linked))
+	for _, u := range linked {
+		linkedItems = append(linkedItems, linkedItem{
+			Account:  u.Account,
+			Name:     u.Name,
+			Disabled: u.Disabled,
+		})
+	}
+
+	realAccount := ctx.RealUserAccount
+	if realAccount == "" {
+		realAccount = ctx.UserAccount
+	}
+
 	response.NewSuccessResponse(map[string]any{
-		"account":  ctx.UserAccount,
-		"name":     ctx.UserName,
-		"is_admin": ctx.IsAdmin,
-		"domains":  domains,
+		"account":        ctx.UserAccount,
+		"name":           ctx.UserName,
+		"is_admin":       ctx.IsAdmin,
+		"domains":        domains,
+		"linked_account": linkedItems,
+		"real_account":   realAccount,
+		"is_acting":      ctx.RealUserID != 0 && ctx.RealUserID != ctx.UserID,
 	}).FPrint(w)
 }
 

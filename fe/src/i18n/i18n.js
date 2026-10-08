@@ -126,6 +126,17 @@ let lang = {
     "extensions_desc": "Manage available plugins and integrations.",
     "login_brand_desc": "Secure, elegant and distraction-free email experience for your team.",
     "login_subtitle": "Enter your credentials to access your mailbox",
+    "current_mailbox": "Current Mailbox",
+    "linked_account": "Linked",
+    "acting_as": "Acting as",
+    "empty_mailbox": "This mailbox has no emails yet",
+    "no_access_acting": "No permission to act as this account",
+    "manage_link": "Linked Accounts",
+    "link_desc": "A linked account is a full account that can sign in and send/receive mail on its own. As its primary account, you can switch to it and read or send mail on its behalf.",
+    "add_linked_account": "Add a linked account",
+    "no_linked_account": "No linked accounts yet",
+    "select_account": "Select an account",
+    "close_btn": "Close",
     "login_fill_required": "Please fill in both fields"
 };
 
@@ -258,6 +269,17 @@ const zhCN = {
     "extensions_desc": "管理可用的扩展插件。",
     "login_brand_desc": "为你的团队提供安全、优雅且专注的邮件体验。",
     "login_subtitle": "请输入凭据以访问你的邮箱",
+    "current_mailbox": "当前邮箱",
+    "linked_account": "关联账户",
+    "acting_as": "正在以",
+    "empty_mailbox": "该邮箱暂无邮件",
+    "no_access_acting": "无权以该账户身份操作",
+    "manage_link": "关联账户",
+    "link_desc": "关联账户是一个完整的账户，可以独立登录、独立收发邮件。作为其主账户，你可以切换到该身份，代它读取或发送邮件。",
+    "add_linked_account": "添加关联账户",
+    "no_linked_account": "暂无关联账户",
+    "select_account": "请选择账户",
+    "close_btn": "关闭",
     "login_fill_required": "请填写账号和密码"
 }
 

@@ -112,6 +112,10 @@ func syncTables() {
 	if err != nil {
 		panic(err)
 	}
+	err = Instance.Sync2(&models.UserLink{})
+	if err != nil {
+		panic(err)
+	}
 	err = Instance.Sync2(&models.Version{})
 	if err != nil {
 		panic(err)

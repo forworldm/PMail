@@ -11,6 +11,7 @@ import (
 	"github.com/Jinnrry/pmail/dto/response"
 	"github.com/Jinnrry/pmail/i18n"
 	"github.com/Jinnrry/pmail/models"
+	"github.com/Jinnrry/pmail/services/link"
 	"github.com/Jinnrry/pmail/session"
 	"github.com/Jinnrry/pmail/utils/context"
 	"github.com/Jinnrry/pmail/utils/id"
@@ -81,6 +82,11 @@ func HttpsStop() {
 
 // 新增：分类处理关闭错误
 
+// actAsHeader 身份切换请求头：值固定为关联账户的账号名（account），如 "sales"。
+// 只接受账号名这一种形式，不做任何类型猜测（不收用户ID，也不收完整邮箱地址），
+// 避免 id 与数字账号名混淆、也避免前端误传邮箱地址。
+const actAsHeader = "X-Pmail-Act-As"
+
 // 注入context
 func contextIterceptor(h controllers.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -131,6 +137,21 @@ func contextIterceptor(h controllers.HandlerFunc) http.HandlerFunc {
 					response.NewErrorResponse(response.NeedLogin, i18n.GetText(ctx.Lang, "login_exp"), "").FPrint(w)
 					return
 				}
+			}
+
+			// 记录真正登录的账户，随后可能切换到关联账户身份
+			ctx.RealUserID = ctx.UserID
+			ctx.RealUserAccount = ctx.UserAccount
+
+			// 身份切换：校验授权关系通过后，把上下文中的身份替换为关联账户。
+			// 业务层所有 "user_id = 当前用户" 的鉴权随之自动作用于关联账户。
+			if actAs := r.Header.Get(actAsHeader); actAs != "" && ctx.UserID > 0 {
+				if err := link.ApplyIdentity(ctx, actAs); err != nil {
+					log.WithContext(ctx).Infof("身份切换失败: %s", err.Error())
+					response.NewErrorResponse(response.NoAccessPrivileges, err.Error(), "").FPrint(w)
+					return
+				}
+				log.WithContext(ctx).Debugf("已切换身份: %s -> %s", ctx.RealUserAccount, ctx.UserAccount)
 			}
 		} else if r.URL.Path != "/api/setup" {
 			response.NewErrorResponse(response.NeedSetup, "", "").FPrint(w)

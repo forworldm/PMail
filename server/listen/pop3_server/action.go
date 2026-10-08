@@ -119,6 +119,8 @@ func (a action) Pass(session *gopop.Session, pwd string) error {
 		session.Ctx.(*context.Context).UserID = user.ID
 		session.Ctx.(*context.Context).UserName = user.Name
 		session.Ctx.(*context.Context).UserAccount = user.Account
+		session.Ctx.(*context.Context).RealUserID = user.ID
+		session.Ctx.(*context.Context).RealUserAccount = user.Account
 
 		return nil
 	}
@@ -156,6 +158,8 @@ func (a action) Apop(session *gopop.Session, username, digest string) error {
 		session.Ctx.(*context.Context).UserID = user.ID
 		session.Ctx.(*context.Context).UserName = user.Name
 		session.Ctx.(*context.Context).UserAccount = user.Account
+		session.Ctx.(*context.Context).RealUserID = user.ID
+		session.Ctx.(*context.Context).RealUserAccount = user.Account
 
 		return nil
 	}

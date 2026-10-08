@@ -31,11 +31,15 @@
                 <div class="sender-edit-card">
                   <div class="edit-row">
                     <span class="edit-label">Prefix</span>
-                    <el-input 
+                    <el-input
                       :disabled="!(globalStatus.userInfos.is_admin)"
-                      v-model="ruleForm.sender" 
+                      v-model="ruleForm.sender"
                       :placeholder="lang.sender_desc"
                     />
+                  </div>
+                  <div class="edit-row acting-tip" v-if="globalStatus.isActing">
+                    <span class="edit-label"></span>
+                    <span class="acting-tip-text">{{ lang.acting_as }} {{ globalStatus.currentAddress }}</span>
                   </div>
                   <div class="edit-row">
                     <span class="edit-label">Domain</span>
@@ -113,7 +117,7 @@
 <script setup>
 import '@wangeditor/editor/dist/css/style.css'
 import {ElMessage} from 'element-plus'
-import {onBeforeUnmount, reactive, ref, shallowRef} from 'vue'
+import {onBeforeUnmount, reactive, ref, shallowRef, watch} from 'vue'
 import {Close, Paperclip, Position, ArrowDown, Document} from '@element-plus/icons-vue';
 import lang from '../i18n/i18n';
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
@@ -161,22 +165,28 @@ const ruleForm = reactive({
 })
 const fileList = reactive([]);
 
+const applyIdentity = function () {
+    ruleForm.sender = globalStatus.userInfos.account
+    ruleForm.domains = globalStatus.userInfos.domains || []
+    ruleForm.pickDomain = ruleForm.domains[0]
+    ruleForm.nickName = globalStatus.userInfos.name
+}
+
 const init = function () {
     if ( Object.keys(globalStatus.userInfos)==0 || globalStatus.userInfos === null || globalStatus.userInfos == undefined ){
       globalStatus.init(()=>{
-        ruleForm.sender = globalStatus.userInfos.account
-        ruleForm.domains = globalStatus.userInfos.domains
-        ruleForm.pickDomain = globalStatus.userInfos.domains[0]
-        ruleForm.nickName = globalStatus.userInfos.name
+        applyIdentity()
       })
     }else{
-      ruleForm.sender = globalStatus.userInfos.account
-      ruleForm.domains = globalStatus.userInfos.domains
-      ruleForm.pickDomain = globalStatus.userInfos.domains[0]
-      ruleForm.nickName = globalStatus.userInfos.name
+      applyIdentity()
     }
 }
 init()
+
+// 切换操作身份后，发件人跟随新身份
+watch(() => globalStatus.actingAccount, () => {
+  applyIdentity()
+})
 
 const validateSender = function (rule, value, callback) {
   if (typeof ruleForm.sender === "undefined" || ruleForm.sender === null || ruleForm.sender.trim() === "") {
@@ -358,6 +368,11 @@ const delFile = function (index) {
 
 .send-btn {
   box-shadow: 0 8px 16px rgba(0, 113, 227, 0.2);
+}
+
+.acting-tip-text {
+  font-size: 12px;
+  color: var(--pm-primary-color);
 }
 
 .composer-body {

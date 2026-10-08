@@ -15,7 +15,30 @@
         class="custom-search"
       />
     </div>
-    
+
+    <div class="mailbox-switcher" v-if="switchableAccounts.length > 0">
+      <div class="switcher-label">{{ lang.current_mailbox }}</div>
+      <el-select
+          v-model="actingValue"
+          class="mailbox-select"
+          size="small"
+          @change="onActingChange"
+      >
+        <el-option
+            v-for="item in switchableAccounts"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+        >
+          <span class="option-main">{{ item.label }}</span>
+          <span class="option-tag" v-if="item.isLinked">{{ lang.linked_account }}</span>
+        </el-option>
+      </el-select>
+      <div class="acting-hint" v-if="globalStatus.isActing">
+        {{ lang.acting_as }} {{ currentAddress }}
+      </div>
+    </div>
+
     <div class="menu-container">
       <el-menu
         :default-active="activeGroup"
@@ -58,21 +81,76 @@ watch(() => groupStore.tag, (newVal) => {
   activeGroup.value = newVal;
 });
 
-http.get("/api/group").then((res) => {
-  if (res.data) {
-    // Attempting to flatten the tree for a simpler premium menu or keep it, el-tree is less beautiful.
-    // For now we assume res.data is an array of items. If it's a tree, we flatten it.
-    let list = [];
-    const traverse = (items) => {
-      items.forEach(node => {
-        list.push(node);
-        if(node.children) traverse(node.children);
-      });
-    }
-    traverse(res.data);
-    data.value = list;
+// 可切换的邮箱：本人 + 全部关联账户
+const domains = computed(() => globalStatus.userInfos.domains || []);
+const currentAddress = computed(() => globalStatus.currentAddress);
+const actingValue = computed({
+  get() {
+    return globalStatus.isActing ? String(globalStatus.actingAccount) : "self"
+  },
+  set(val) {
+    // 由 onActingChange 处理，这里只做占位
   }
 });
+
+const buildAddress = (account) => {
+  if (!account) return "";
+  return domains.value.length > 0 ? account + "@" + domains.value[0] : account;
+}
+
+const switchableAccounts = computed(() => {
+  const list = [{
+    value: "self",
+    label: buildAddress(globalStatus.userInfos.account),
+    isLinked: false
+  }];
+  (globalStatus.linkedAccounts || []).forEach(item => {
+    list.push({
+      // 身份切换统一以账号名为标识，不使用用户ID
+      value: String(item.account),
+      label: buildAddress(item.account),
+      isLinked: true
+    });
+  });
+  return list;
+});
+
+const loadGroups = () => {
+  http.get("/api/group").then((res) => {
+    if (res.data) {
+      // Attempting to flatten the tree for a simpler premium menu or keep it, el-tree is less beautiful.
+      // For now we assume res.data is an array of items. If it's a tree, we flatten it.
+      let list = [];
+      const traverse = (items) => {
+        items.forEach(node => {
+          list.push(node);
+          if(node.children) traverse(node.children);
+        });
+      }
+      traverse(res.data);
+      data.value = list;
+    }
+  });
+}
+loadGroups();
+
+// 切换操作身份后，分组与邮件列表都需要按新身份重新拉取
+watch(() => globalStatus.actingAccount, () => {
+  loadGroups();
+  groupStore.tag = "";
+  groupStore.name = lang.inbox;
+  if (router.currentRoute.value.name !== "list") {
+    router.push({name: "list"});
+  }
+});
+
+const onActingChange = function (val) {
+  const target = val === "self" ? null : val;
+  if (String(target) === String(globalStatus.actingAccount)) {
+    return;
+  }
+  globalStatus.setActing(target);
+};
 
 const handleMenuSelect = function (index) {
   const selected = data.value.find(d => d.tag === index);
@@ -146,6 +224,45 @@ const openSettings = function () {
 .custom-search :deep(.el-input__wrapper.is-focus) {
   background-color: var(--pm-bg-secondary);
   box-shadow: 0 0 0 1px var(--pm-primary-color) inset;
+}
+
+.mailbox-switcher {
+  padding: 0 18px 14px;
+}
+
+.switcher-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pm-text-secondary);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+
+.mailbox-select {
+  width: 100%;
+}
+
+.option-main {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.option-tag {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--pm-primary-color);
+  background: var(--el-color-primary-light-9);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.acting-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--pm-text-secondary);
+  word-break: break-all;
 }
 
 .menu-container {

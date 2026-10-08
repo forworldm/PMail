@@ -3,6 +3,7 @@
     <div class="list-header">
       <div class="header-title">
         <h2>{{ groupStore.name }}</h2>
+        <span class="current-mailbox" v-if="globalStatus.isActing">@ {{ globalStatus.currentAddress }}</span>
       </div>
       <div class="header-actions">
         <div class="selection-actions">
@@ -81,6 +82,9 @@
           </template>
         </el-table-column>
       </el-table>
+      <div class="empty-hint" v-if="data.length === 0">
+        {{ lang.empty_mailbox }}
+      </div>
     </div>
 
     <div class="pagination-wrapper" v-if="totalPage > 0">
@@ -103,9 +107,11 @@ import useGroupStore from '../stores/group'
 import lang from '../i18n/i18n';
 import {http} from "@/utils/axios";
 import {ElMessage, ElMessageBox} from "element-plus";
+import {useGlobalStatusStore} from "@/stores/useGlobalStatusStore";
 
 const router = useRouter();
 const groupStore = useGroupStore()
+const globalStatus = useGlobalStatusStore()
 const groupList = ref([])
 const taskTableDataRef = ref(null)
 const selectedRows = ref([])
@@ -122,6 +128,13 @@ watch(groupStore, async (newV) => {
   }
   data.value = []
   updateList()
+})
+
+// 切换操作身份后，按新身份重新拉取邮件与分组
+watch(() => globalStatus.actingAccount, () => {
+  data.value = []
+  updateList()
+  updateGroupList()
 })
 
 const data = ref([])
@@ -279,6 +292,20 @@ const pageChange = function (p) {
   color: var(--pm-text-primary);
   margin: 0;
   letter-spacing: -0.02em;
+}
+
+.current-mailbox {
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--pm-text-secondary);
+}
+
+.empty-hint {
+  padding: 40px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--pm-text-secondary);
 }
 
 .header-actions {

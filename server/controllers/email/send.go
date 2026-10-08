@@ -186,7 +186,7 @@ func Send(ctx *context.Context, w http.ResponseWriter, req *http.Request) {
 		Attachments:  json2string(e.Attachments),
 		SPFCheck:     1,
 		DKIMCheck:    1,
-		SendUserID:   ctx.UserID,
+		SendUserID:   ctx.RealUserID,
 		SendDate:     time.Now(),
 		CronSendTime: time.Now(),
 		Status:       1,

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import lang from '../i18n/i18n';
+import {ElMessage} from 'element-plus'
 import {useGlobalStatusStore} from "@/stores/useGlobalStatusStore";
 import {router} from "@/router";
 
@@ -18,6 +19,17 @@ http.interceptors.request.use((config) => {
     //若请求方式为post，则将data参数转为JSON字符串
     if (config.method === 'POST') {
         config.data = JSON.stringify(config.data);
+    }
+    // 身份切换：当前以某个关联账户身份操作时，通知服务端
+    // 直接从 localStorage 读取，避免依赖 pinia 实例化时序
+    try {
+        const actingAccount = window.localStorage.getItem('pmail.acting_account');
+        if (actingAccount && actingAccount !== 'null' && actingAccount !== 'undefined') {
+            // 只传账号名，不做任何类型猜测
+            config.headers['X-Pmail-Act-As'] = actingAccount;
+        }
+    } catch (e) {
+        // 隐私模式下 localStorage 不可用，忽略
     }
     return config;
 }, (error) =>
@@ -44,6 +56,20 @@ http.interceptors.response.use(async (response) => {
                 redirect: router.currentRoute.fullPath
             }
         });
+    }
+    // 身份切换无效（关联关系被解除、账户被禁用等）：提示并回落到本人身份
+    if (response.data.errorNo === 405 && response.config && response.config.headers &&
+        response.config.headers['X-Pmail-Act-As']) {
+        try {
+            window.localStorage.removeItem('pmail.acting_account');
+        } catch (e) {
+            // ignore
+        }
+        ElMessage.error(lang.no_access_acting || 'No permission to act as this account');
+        // 刷新页面，让界面回到本人身份
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
     }
     return response.data;
 }, async (error) => {
