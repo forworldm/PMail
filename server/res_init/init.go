@@ -3,6 +3,8 @@ package res_init
 import (
 	"encoding/json"
 	"os"
+	ossignal "os/signal"
+	"syscall"
 	"time"
 
 	"fmt"
@@ -75,6 +77,8 @@ func Init(serverVersion string) {
 		configStr, _ := json.Marshal(config.Instance)
 		log.Warnf("Config File Info:  %s", configStr)
 
+		initSignal()
+
 		select {
 		case <-signal.RestartChan:
 			log.Infof("Server Restart!")
@@ -92,6 +96,12 @@ func Init(serverVersion string) {
 			pop3_server.Stop()
 			imap_server.Stop()
 			hooks.Stop()
+			if db.Instance != nil {
+				time.Sleep(2 * time.Second)
+				if err := db.Instance.Close(); err != nil {
+					log.Errorf("DB close error: %s", err.Error())
+				}
+			}
 			return
 		}
 		log.Infof("Server Stop Success!")
@@ -145,4 +155,21 @@ func waitHTTPReady() {
 		time.Sleep(1 * time.Second)
 	}
 	log.Warnf("HTTP not ready after 90s, skipping immediate SSL update")
+}
+
+func initSignal() {
+	sigChan := make(chan os.Signal, 1)
+	ossignal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
+
+	go func() {
+		for sig := range sigChan {
+			log.Infof("Received signal: %v", sig)
+			switch sig {
+			case syscall.SIGTERM, syscall.SIGINT:
+				signal.StopChan <- true
+			case syscall.SIGHUP:
+				signal.RestartChan <- true
+			}
+		}
+	}()
 }
